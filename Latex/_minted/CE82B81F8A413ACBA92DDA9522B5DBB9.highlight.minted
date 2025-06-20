@@ -1,0 +1,32 @@
+\begin{MintedVerbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8\relax}]
+\PYG{k+kn}{import}\PYG{+w}{ }\PYG{n+nn}{xarray}\PYG{+w}{ }\PYG{k}{as}\PYG{+w}{ }\PYG{n+nn}{xr}
+\PYG{k+kn}{import}\PYG{+w}{ }\PYG{n+nn}{numpy}\PYG{+w}{ }\PYG{k}{as}\PYG{+w}{ }\PYG{n+nn}{np}
+\PYG{k+kn}{import}\PYG{+w}{ }\PYG{n+nn}{pandas}\PYG{+w}{ }\PYG{k}{as}\PYG{+w}{ }\PYG{n+nn}{pd}
+
+\PYG{c+c1}{\PYGZsh{} Ruta al archivo GRIB (ajusta si lo necesitas)}
+\PYG{n}{file\PYGZus{}path} \PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{datos\PYGZus{}clima\PYGZus{}era5.grib}\PYG{l+s+s2}{\PYGZdq{}}
+
+\PYG{c+c1}{\PYGZsh{} Abrir el archivo con cfgrib}
+\PYG{n}{ds} \PYG{o}{=} \PYG{n}{xr}\PYG{o}{.}\PYG{n}{open\PYGZus{}dataset}\PYG{p}{(}\PYG{n}{file\PYGZus{}path}\PYG{p}{,} \PYG{n}{engine}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{cfgrib}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZsh{} Calcular velocidad y dirección del viento}
+\PYG{n}{u10} \PYG{o}{=} \PYG{n}{ds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{u10}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}
+\PYG{n}{v10} \PYG{o}{=} \PYG{n}{ds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{v10}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}
+\PYG{n}{wind\PYGZus{}speed} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{sqrt}\PYG{p}{(}\PYG{n}{u10}\PYG{o}{*}\PYG{o}{*}\PYG{l+m+mi}{2} \PYG{o}{+} \PYG{n}{v10}\PYG{o}{*}\PYG{o}{*}\PYG{l+m+mi}{2}\PYG{p}{)}
+\PYG{n}{wind\PYGZus{}dir} \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{180}\PYG{o}{/}\PYG{n}{np}\PYG{o}{.}\PYG{n}{pi}\PYG{p}{)} \PYG{o}{*} \PYG{n}{np}\PYG{o}{.}\PYG{n}{arctan2}\PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{n}{u10}\PYG{p}{,} \PYG{o}{\PYGZhy{}}\PYG{n}{v10}\PYG{p}{)} \PYG{o}{\PYGZpc{}} \PYG{l+m+mi}{360}
+
+\PYG{c+c1}{\PYGZsh{} Añadir velocidad y dirección al dataset}
+\PYG{n}{ds} \PYG{o}{=} \PYG{n}{ds}\PYG{o}{.}\PYG{n}{assign}\PYG{p}{(}\PYG{n}{wind\PYGZus{}speed}\PYG{o}{=}\PYG{n}{wind\PYGZus{}speed}\PYG{p}{)}
+\PYG{n}{ds} \PYG{o}{=} \PYG{n}{ds}\PYG{o}{.}\PYG{n}{assign}\PYG{p}{(}\PYG{n}{wind\PYGZus{}dir}\PYG{o}{=}\PYG{n}{wind\PYGZus{}dir}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZsh{} Filtrar por el área de Santa Cruz, Bolivia (aproximadamente)}
+\PYG{c+c1}{\PYGZsh{} Latitudes ~ -17.0 a -18.5, Longitudes ~ -64.5 a -62.5}
+\PYG{n}{ds\PYGZus{}scz} \PYG{o}{=} \PYG{n}{ds}\PYG{o}{.}\PYG{n}{sel}\PYG{p}{(}\PYG{n}{latitude}\PYG{o}{=}\PYG{n+nb}{slice}\PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{l+m+mf}{17.0}\PYG{p}{,} \PYG{o}{\PYGZhy{}}\PYG{l+m+mf}{18.5}\PYG{p}{)}\PYG{p}{,} \PYG{n}{longitude}\PYG{o}{=}\PYG{n+nb}{slice}\PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{l+m+mf}{64.5}\PYG{p}{,} \PYG{o}{\PYGZhy{}}\PYG{l+m+mf}{62.5}\PYG{p}{)}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZsh{} Convertir a DataFrame}
+\PYG{n}{df} \PYG{o}{=} \PYG{n}{ds\PYGZus{}scz}\PYG{p}{[}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{wind\PYGZus{}speed}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{wind\PYGZus{}dir}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}\PYG{p}{]}\PYG{o}{.}\PYG{n}{to\PYGZus{}dataframe}\PYG{p}{(}\PYG{p}{)}\PYG{o}{.}\PYG{n}{reset\PYGZus{}index}\PYG{p}{(}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZsh{} Guardar como CSV}
+\PYG{n}{df}\PYG{o}{.}\PYG{n}{to\PYGZus{}csv}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{viento\PYGZus{}santa\PYGZus{}cruz.csv}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{index}\PYG{o}{=}\PYG{k+kc}{False}\PYG{p}{)}
+\PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Archivo guardado como viento\PYGZus{}santa\PYGZus{}cruz.csv}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+\end{MintedVerbatim}

@@ -1,0 +1,124 @@
+
+    ==================================================================================
+                        REPORTE DETALLADO DE ANÁLISIS EÓLICO
+                            SANTA CRUZ, BOLIVIA
+    ==================================================================================
+
+    FECHA DE ANÁLISIS: 20/06/2025 10:49:43
+    PERÍODO DE DATOS: 01/01/2024 - 31/12/2024
+    TOTAL DE REGISTROS: 491,904 mediciones
+    POTENCIA NOMINAL: 4904 kW
+
+    ==================================================================================
+    1. ESTADÍSTICAS BÁSICAS DE VELOCIDAD DEL VIENTO
+    ==================================================================================
+
+    • Velocidad media anual:           2.91 m/s
+    • Velocidad mediana:               2.56 m/s
+    • Velocidad máxima registrada:     12.08 m/s
+    • Velocidad mínima registrada:     0.01 m/s
+    • Desviación estándar:             1.73 m/s
+    • Coeficiente de variación:        59.6%
+
+    ==================================================================================
+    2. ANÁLISIS DE DISTRIBUCIÓN WEIBULL
+    ==================================================================================
+
+    • Parámetro de escala (c):         3.15 m/s
+    • Parámetro de forma (k):          1.75
+    • Calidad del ajuste:              Excelente
+
+    Interpretación del parámetro k:
+    • k = 1.75 indica vientos moderadamente variables
+
+    ==================================================================================
+    3. CLASIFICACIÓN DEL RECURSO EÓLICO
+    ==================================================================================
+
+    • CLASIFICACIÓN:                   POBRE
+    • VIABILIDAD ECONÓMICA:            NO VIABLE
+    • DENSIDAD DE POTENCIA:            15 W/m²
+
+    Referencia de clasificación (velocidad media anual):
+    • Excelente: ≥ 7.5 m/s    • Bueno: 6.5-7.4 m/s    • Moderado: 5.5-6.4 m/s
+    • Marginal: 4.5-5.4 m/s   • Pobre: < 4.5 m/s
+
+    ==================================================================================
+    4. ANÁLISIS DE POTENCIA Y GENERACIÓN
+    ==================================================================================
+
+    • Potencia media generada:         145 kW
+    • Factor de capacidad:             3.0%
+    • Energía anual estimada:          71254 MWh/año
+
+    ESTADOS DE OPERACIÓN:
+    • Horas sin generación:            291,408 (59.2%)
+    • Horas con generación:            200,496 (40.8%)
+    • Horas a potencia nominal:        3 (0.0%)
+
+    • Velocidades útiles (3-25 m/s):   40.8%
+
+    ==================================================================================
+    5. ANÁLISIS TEMPORAL
+    ==================================================================================
+
+    VARIACIÓN MENSUAL:
+    • Mejor mes:                       Junio (3.47 m/s)
+    • Peor mes:                        Febrero (2.26 m/s)
+    • Variación estacional:            1.21 m/s
+
+    VARIACIÓN DIARIA:
+    • Mejor hora del día:              18:00 hrs
+    • Peor hora del día:               03:00 hrs
+
+    ==================================================================================
+    6. EVALUACIÓN DE VIABILIDAD ECONÓMICA
+    ==================================================================================
+
+    FACTORES POSITIVOS:
+    ✓ Baja variación estacional
+
+    FACTORES DE RIESGO:
+    ⚠ Velocidad media anual inferior a 5.5 m/s
+⚠ Factor de capacidad inferior al 20%
+⚠ Bajo porcentaje de velocidades útiles
+
+    ==================================================================================
+    7. RECOMENDACIONES TÉCNICAS
+    ==================================================================================
+
+    SELECCIÓN DE AEROGENERADORES:
+    • Considerar: Aerogeneradores de baja potencia (<1MW)
+• Velocidad de arranque: ≤3 m/s
+• Velocidad nominal: 8-10 m/s
+
+    ALTURA DE BUJE RECOMENDADA:
+    • ≥120 metros (necesario para mejorar recurso)
+
+    ==================================================================================
+    8. CONCLUSIONES Y RECOMENDACIONES FINALES
+    ==================================================================================
+
+    RESUMEN EJECUTIVO:
+    
+    • El sitio presenta condiciones POBRES para desarrollo eólico
+    • NO se recomienda para proyectos comerciales
+    • Considerar otras fuentes de energía renovable
+    • Retorno de inversión esperado: Bajo o Negativo
+    
+    PRÓXIMOS PASOS RECOMENDADOS:
+    
+    1. Considerar otros sitios con mejor exposición al viento
+    2. Evaluar tecnologías eólicas de pequeña escala
+    3. Analizar hibridación con solar fotovoltaica
+    4. Estudio de otras fuentes renovables
+    
+    ==================================================================================
+    NOTA TÉCNICA:
+    Este reporte se basa en los datos proporcionados y utiliza modelos estándar de
+    la industria eólica. Para decisiones de inversión, se recomienda validar con
+    mediciones adicionales y consultores especializados.
+
+    Generado por: Sistema de Análisis Eólico v1.1 (Corregido)
+    ==================================================================================
+    

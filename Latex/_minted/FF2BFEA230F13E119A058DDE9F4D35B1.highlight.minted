@@ -1,0 +1,629 @@
+\begin{MintedVerbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8\relax}]
+\PYG{c+ch}{\PYGZsh{}!/usr/bin/env python3}
+\PYG{k+kn}{import}\PYG{+w}{ }\PYG{n+nn}{os}
+\PYG{k+kn}{import}\PYG{+w}{ }\PYG{n+nn}{math}
+\PYG{k+kn}{import}\PYG{+w}{ }\PYG{n+nn}{numpy}\PYG{+w}{ }\PYG{k}{as}\PYG{+w}{ }\PYG{n+nn}{np}
+\PYG{k+kn}{import}\PYG{+w}{ }\PYG{n+nn}{pandas}\PYG{+w}{ }\PYG{k}{as}\PYG{+w}{ }\PYG{n+nn}{pd}
+\PYG{k+kn}{import}\PYG{+w}{ }\PYG{n+nn}{matplotlib}\PYG{n+nn}{.}\PYG{n+nn}{pyplot}\PYG{+w}{ }\PYG{k}{as}\PYG{+w}{ }\PYG{n+nn}{plt}
+\PYG{k+kn}{import}\PYG{+w}{ }\PYG{n+nn}{seaborn}\PYG{+w}{ }\PYG{k}{as}\PYG{+w}{ }\PYG{n+nn}{sns}
+\PYG{k+kn}{from}\PYG{+w}{ }\PYG{n+nn}{scipy}\PYG{n+nn}{.}\PYG{n+nn}{optimize}\PYG{+w}{ }\PYG{k+kn}{import} \PYG{n}{curve\PYGZus{}fit}
+\PYG{k+kn}{import}\PYG{+w}{ }\PYG{n+nn}{plotly}\PYG{n+nn}{.}\PYG{n+nn}{express}\PYG{+w}{ }\PYG{k}{as}\PYG{+w}{ }\PYG{n+nn}{px}
+\PYG{k+kn}{import}\PYG{+w}{ }\PYG{n+nn}{plotly}\PYG{n+nn}{.}\PYG{n+nn}{graph\PYGZus{}objects}\PYG{+w}{ }\PYG{k}{as}\PYG{+w}{ }\PYG{n+nn}{go}
+
+\PYG{n}{plt}\PYG{o}{.}\PYG{n}{style}\PYG{o}{.}\PYG{n}{use}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{seaborn\PYGZhy{}v0\PYGZus{}8\PYGZhy{}whitegrid}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+\PYG{n}{plt}\PYG{o}{.}\PYG{n}{rcParams}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{figure.figsize}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]} \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{12}\PYG{p}{,} \PYG{l+m+mi}{8}\PYG{p}{)}
+\PYG{n}{plt}\PYG{o}{.}\PYG{n}{rcParams}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{font.size}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{12}
+\PYG{n}{plt}\PYG{o}{.}\PYG{n}{rcParams}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{axes.titlesize}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{14}
+\PYG{n}{plt}\PYG{o}{.}\PYG{n}{rcParams}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{axes.titleweight}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]} \PYG{o}{=} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}
+
+\PYG{n}{RUTA\PYGZus{}RES} \PYG{o}{=} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{resultados\PYGZus{}analisis\PYGZus{}eolico}\PYG{l+s+s1}{\PYGZsq{}}
+\PYG{n}{RUTA\PYGZus{}GRAF} \PYG{o}{=} \PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{RUTA\PYGZus{}RES}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{/graficos}\PYG{l+s+s1}{\PYGZsq{}}
+\PYG{k}{for} \PYG{n}{carpeta} \PYG{o+ow}{in} \PYG{p}{(}\PYG{n}{RUTA\PYGZus{}RES}\PYG{p}{,} \PYG{n}{RUTA\PYGZus{}GRAF}\PYG{p}{)}\PYG{p}{:}
+    \PYG{n}{os}\PYG{o}{.}\PYG{n}{makedirs}\PYG{p}{(}\PYG{n}{carpeta}\PYG{p}{,} \PYG{n}{exist\PYGZus{}ok}\PYG{o}{=}\PYG{k+kc}{True}\PYG{p}{)}
+
+\PYG{k}{class}\PYG{+w}{ }\PYG{n+nc}{AnalisisEolicoSantaCruz}\PYG{p}{:}
+    \PYG{k}{def}\PYG{+w}{ }\PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{csv\PYGZus{}file\PYGZus{}path}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{viento\PYGZus{}santa\PYGZus{}cruz.csv}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}\PYG{p}{:}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df} \PYG{o}{=} \PYG{n}{pd}\PYG{o}{.}\PYG{n}{read\PYGZus{}csv}\PYG{p}{(}\PYG{n}{csv\PYGZus{}file\PYGZus{}path}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{cp\PYGZus{}max} \PYG{o}{=} \PYG{l+m+mf}{0.59}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{densidad\PYGZus{}aire} \PYG{o}{=} \PYG{l+m+mf}{1.225}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{preparar\PYGZus{}datos}\PYG{p}{(}\PYG{p}{)}
+
+    \PYG{k}{def}\PYG{+w}{ }\PYG{n+nf}{preparar\PYGZus{}datos}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{)}\PYG{p}{:}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{time}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]} \PYG{o}{=} \PYG{n}{pd}\PYG{o}{.}\PYG{n}{to\PYGZus{}datetime}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{time}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{o}{.}\PYG{n}{dropna}\PYG{p}{(}\PYG{p}{)}\PYG{o}{.}\PYG{n}{query}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{0 \PYGZlt{}= wind\PYGZus{}speed \PYGZlt{}= 50}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{year}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{time}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}\PYG{o}{.}\PYG{n}{dt}\PYG{o}{.}\PYG{n}{year}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{month}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{time}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}\PYG{o}{.}\PYG{n}{dt}\PYG{o}{.}\PYG{n}{month}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{hour}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{time}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}\PYG{o}{.}\PYG{n}{dt}\PYG{o}{.}\PYG{n}{hour}
+
+    \PYG{k}{def}\PYG{+w}{ }\PYG{n+nf}{distribucion\PYGZus{}weibull}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{velocidades}\PYG{p}{)}\PYG{p}{:}
+        \PYG{k}{def}\PYG{+w}{ }\PYG{n+nf}{weibull\PYGZus{}pdf}\PYG{p}{(}\PYG{n}{x}\PYG{p}{,} \PYG{n}{c}\PYG{p}{,} \PYG{n}{k}\PYG{p}{)}\PYG{p}{:}
+            \PYG{k}{return} \PYG{p}{(}\PYG{n}{k} \PYG{o}{/} \PYG{n}{c}\PYG{p}{)} \PYG{o}{*} \PYG{p}{(}\PYG{n}{x} \PYG{o}{/} \PYG{n}{c}\PYG{p}{)} \PYG{o}{*}\PYG{o}{*} \PYG{p}{(}\PYG{n}{k} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{*} \PYG{n}{np}\PYG{o}{.}\PYG{n}{exp}\PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{p}{(}\PYG{n}{x} \PYG{o}{/} \PYG{n}{c}\PYG{p}{)} \PYG{o}{*}\PYG{o}{*} \PYG{n}{k}\PYG{p}{)}
+        \PYG{n}{v\PYGZus{}cln} \PYG{o}{=} \PYG{n}{velocidades}\PYG{p}{[}\PYG{n}{velocidades} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{]}
+        \PYG{k}{try}\PYG{p}{:}
+            \PYG{n}{hist}\PYG{p}{,} \PYG{n}{bins} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{histogram}\PYG{p}{(}\PYG{n}{v\PYGZus{}cln}\PYG{p}{,} \PYG{n}{bins}\PYG{o}{=}\PYG{l+m+mi}{50}\PYG{p}{,} \PYG{n}{density}\PYG{o}{=}\PYG{k+kc}{True}\PYG{p}{)}
+            \PYG{n}{bin\PYGZus{}centers} \PYG{o}{=} \PYG{p}{(}\PYG{n}{bins}\PYG{p}{[}\PYG{p}{:}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{+} \PYG{n}{bins}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{:}\PYG{p}{]}\PYG{p}{)} \PYG{o}{/} \PYG{l+m+mi}{2}
+            \PYG{n}{popt}\PYG{p}{,} \PYG{n}{\PYGZus{}} \PYG{o}{=} \PYG{n}{curve\PYGZus{}fit}\PYG{p}{(}\PYG{n}{weibull\PYGZus{}pdf}\PYG{p}{,} \PYG{n}{bin\PYGZus{}centers}\PYG{p}{,} \PYG{n}{hist}\PYG{p}{,} \PYG{n}{p0}\PYG{o}{=}\PYG{p}{[}\PYG{n}{v\PYGZus{}cln}\PYG{o}{.}\PYG{n}{mean}\PYG{p}{(}\PYG{p}{)}\PYG{p}{,} \PYG{l+m+mf}{2.0}\PYG{p}{]}\PYG{p}{,} \PYG{n}{maxfev}\PYG{o}{=}\PYG{l+m+mi}{5000}\PYG{p}{)}
+            \PYG{n}{c}\PYG{p}{,} \PYG{n}{k} \PYG{o}{=} \PYG{n}{popt}
+            \PYG{n}{x} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{linspace}\PYG{p}{(}\PYG{l+m+mf}{0.1}\PYG{p}{,} \PYG{n}{v\PYGZus{}cln}\PYG{o}{.}\PYG{n}{max}\PYG{p}{(}\PYG{p}{)}\PYG{p}{,} \PYG{l+m+mi}{100}\PYG{p}{)}
+            \PYG{k}{return} \PYG{n}{c}\PYG{p}{,} \PYG{n}{k}\PYG{p}{,} \PYG{n}{x}\PYG{p}{,} \PYG{n}{weibull\PYGZus{}pdf}\PYG{p}{(}\PYG{n}{x}\PYG{p}{,} \PYG{n}{c}\PYG{p}{,} \PYG{n}{k}\PYG{p}{)}
+        \PYG{k}{except}\PYG{p}{:}
+            \PYG{k}{return} \PYG{k+kc}{None}\PYG{p}{,} \PYG{k+kc}{None}\PYG{p}{,} \PYG{k+kc}{None}\PYG{p}{,} \PYG{k+kc}{None}
+
+    \PYG{k}{def}\PYG{+w}{ }\PYG{n+nf}{histograma\PYGZus{}velocidades}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{)}\PYG{p}{:}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{figure}\PYG{p}{(}\PYG{n}{figsize}\PYG{o}{=}\PYG{p}{(}\PYG{l+m+mi}{10}\PYG{p}{,} \PYG{l+m+mi}{6}\PYG{p}{)}\PYG{p}{)}
+        \PYG{n}{v} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{o}{.}\PYG{n}{wind\PYGZus{}speed}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{hist}\PYG{p}{(}\PYG{n}{v}\PYG{p}{,} \PYG{n}{bins}\PYG{o}{=}\PYG{l+m+mi}{50}\PYG{p}{,} \PYG{n}{density}\PYG{o}{=}\PYG{k+kc}{True}\PYG{p}{,} \PYG{n}{alpha}\PYG{o}{=}\PYG{l+m+mf}{0.7}\PYG{p}{,} \PYG{n}{color}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{skyblue}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{edgecolor}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{black}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{c}\PYG{p}{,} \PYG{n}{k}\PYG{p}{,} \PYG{n}{x}\PYG{p}{,} \PYG{n}{y} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{distribucion\PYGZus{}weibull}\PYG{p}{(}\PYG{n}{v}\PYG{p}{)}
+        \PYG{k}{if} \PYG{n}{c}\PYG{p}{:}
+            \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{x}\PYG{p}{,} \PYG{n}{y}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{r\PYGZhy{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{lw}\PYG{o}{=}\PYG{l+m+mi}{3}\PYG{p}{,} \PYG{n}{label}\PYG{o}{=}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Distribución Weibull (c=}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{c}\PYG{l+s+si}{:}\PYG{l+s+s1}{.2f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{, k=}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{k}\PYG{l+s+si}{:}\PYG{l+s+s1}{.2f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{)}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+            \PYG{n}{plt}\PYG{o}{.}\PYG{n}{legend}\PYG{p}{(}\PYG{n}{fontsize}\PYG{o}{=}\PYG{l+m+mi}{12}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{xlabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Velocidad del Viento (m/s)}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontsize}\PYG{o}{=}\PYG{l+m+mi}{12}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{ylabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Densidad de Probabilidad}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontsize}\PYG{o}{=}\PYG{l+m+mi}{12}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{title}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Distribución de Frecuencias de Velocidad del Viento}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s+s1}{Santa Cruz, Bolivia}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontsize}\PYG{o}{=}\PYG{l+m+mi}{14}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{grid}\PYG{p}{(}\PYG{n}{alpha}\PYG{o}{=}\PYG{l+m+mf}{0.3}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{tight\PYGZus{}layout}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{savefig}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{RUTA\PYGZus{}GRAF}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{/histograma\PYGZus{}velocidades.pdf}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{dpi}\PYG{o}{=}\PYG{l+m+mi}{300}\PYG{p}{,} \PYG{n}{bbox\PYGZus{}inches}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{tight}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{close}\PYG{p}{(}\PYG{p}{)}
+
+    \PYG{k}{def}\PYG{+w}{ }\PYG{n+nf}{rosa\PYGZus{}vientos\PYGZus{}colorizada}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{)}\PYG{p}{:}
+        \PYG{n}{fig}\PYG{p}{,} \PYG{n}{ax} \PYG{o}{=} \PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplots}\PYG{p}{(}\PYG{n}{figsize}\PYG{o}{=}\PYG{p}{(}\PYG{l+m+mi}{10}\PYG{p}{,} \PYG{l+m+mi}{10}\PYG{p}{)}\PYG{p}{,} \PYG{n}{subplot\PYGZus{}kw}\PYG{o}{=}\PYG{n+nb}{dict}\PYG{p}{(}\PYG{n}{projection}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{polar}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}\PYG{p}{)}
+        \PYG{n}{ax}\PYG{o}{.}\PYG{n}{set\PYGZus{}theta\PYGZus{}zero\PYGZus{}location}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{N}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{ax}\PYG{o}{.}\PYG{n}{set\PYGZus{}theta\PYGZus{}direction}\PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{)}
+        
+        \PYG{n}{bins\PYGZus{}dir} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{linspace}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{o}{*}\PYG{n}{np}\PYG{o}{.}\PYG{n}{pi}\PYG{p}{,} \PYG{l+m+mi}{37}\PYG{p}{)}
+        \PYG{n}{bins\PYGZus{}vel} \PYG{o}{=} \PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mf}{3.5}\PYG{p}{,} \PYG{l+m+mf}{5.5}\PYG{p}{,} \PYG{l+m+mf}{8.0}\PYG{p}{,} \PYG{l+m+mf}{10.5}\PYG{p}{,} \PYG{l+m+mf}{15.0}\PYG{p}{,} \PYG{n}{np}\PYG{o}{.}\PYG{n}{inf}\PYG{p}{]}
+        \PYG{n}{labels\PYGZus{}vel} \PYG{o}{=} \PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{0\PYGZhy{}3.5}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{3.5\PYGZhy{}5.5}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{5.5\PYGZhy{}8.0}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{8.0\PYGZhy{}10.5}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{10.5\PYGZhy{}15.0}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{\PYGZgt{}15.0}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}
+        \PYG{n}{colores} \PYG{o}{=} \PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{\PYGZsh{}313695}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{\PYGZsh{}4575b4}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{\PYGZsh{}74add1}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{\PYGZsh{}abd9e9}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{\PYGZsh{}fee090}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{\PYGZsh{}d73027}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}
+        
+        \PYG{n}{dirs\PYGZus{}rad} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{radians}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{o}{.}\PYG{n}{wind\PYGZus{}dir}\PYG{p}{)}
+        
+        \PYG{k}{for} \PYG{n}{i}\PYG{p}{,} \PYG{p}{(}\PYG{n}{v\PYGZus{}min}\PYG{p}{,} \PYG{n}{v\PYGZus{}max}\PYG{p}{)} \PYG{o+ow}{in} \PYG{n+nb}{enumerate}\PYG{p}{(}\PYG{n+nb}{zip}\PYG{p}{(}\PYG{n}{bins\PYGZus{}vel}\PYG{p}{[}\PYG{p}{:}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{]}\PYG{p}{,} \PYG{n}{bins\PYGZus{}vel}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{:}\PYG{p}{]}\PYG{p}{)}\PYG{p}{)}\PYG{p}{:}
+            \PYG{k}{if} \PYG{n}{v\PYGZus{}max} \PYG{o}{==} \PYG{n}{np}\PYG{o}{.}\PYG{n}{inf}\PYG{p}{:}
+                \PYG{n}{mask} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{o}{.}\PYG{n}{wind\PYGZus{}speed} \PYG{o}{\PYGZgt{}}\PYG{o}{=} \PYG{n}{v\PYGZus{}min}
+            \PYG{k}{else}\PYG{p}{:}
+                \PYG{n}{mask} \PYG{o}{=} \PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{o}{.}\PYG{n}{wind\PYGZus{}speed} \PYG{o}{\PYGZgt{}}\PYG{o}{=} \PYG{n}{v\PYGZus{}min}\PYG{p}{)} \PYG{o}{\PYGZam{}} \PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{o}{.}\PYG{n}{wind\PYGZus{}speed} \PYG{o}{\PYGZlt{}} \PYG{n}{v\PYGZus{}max}\PYG{p}{)}
+            
+            \PYG{k}{if} \PYG{n}{mask}\PYG{o}{.}\PYG{n}{sum}\PYG{p}{(}\PYG{p}{)} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{:}
+                \PYG{n}{dirs\PYGZus{}filtradas} \PYG{o}{=} \PYG{n}{dirs\PYGZus{}rad}\PYG{p}{[}\PYG{n}{mask}\PYG{p}{]}
+                \PYG{n}{ax}\PYG{o}{.}\PYG{n}{hist}\PYG{p}{(}\PYG{n}{dirs\PYGZus{}filtradas}\PYG{p}{,} \PYG{n}{bins}\PYG{o}{=}\PYG{n}{bins\PYGZus{}dir}\PYG{p}{,} \PYG{n}{alpha}\PYG{o}{=}\PYG{l+m+mf}{0.8}\PYG{p}{,} \PYG{n}{color}\PYG{o}{=}\PYG{n}{colores}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]}\PYG{p}{,} 
+                       \PYG{n}{label}\PYG{o}{=}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{labels\PYGZus{}vel}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{ m/s}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{density}\PYG{o}{=}\PYG{k+kc}{False}\PYG{p}{)}
+        
+        \PYG{n}{ax}\PYG{o}{.}\PYG{n}{set\PYGZus{}title}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Rosa de Vientos por Rangos de Velocidad}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s+s1}{Santa Cruz, Bolivia}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} 
+                    \PYG{n}{pad}\PYG{o}{=}\PYG{l+m+mi}{30}\PYG{p}{,} \PYG{n}{fontsize}\PYG{o}{=}\PYG{l+m+mi}{16}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{ax}\PYG{o}{.}\PYG{n}{set\PYGZus{}thetagrids}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{arange}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{360}\PYG{p}{,} \PYG{l+m+mi}{45}\PYG{p}{)}\PYG{p}{,} \PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{N}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{NE}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{E}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{SE}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{S}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{SW}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{W}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{NW}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}\PYG{p}{)}
+        \PYG{n}{ax}\PYG{o}{.}\PYG{n}{legend}\PYG{p}{(}\PYG{n}{loc}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{upper left}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{bbox\PYGZus{}to\PYGZus{}anchor}\PYG{o}{=}\PYG{p}{(}\PYG{l+m+mf}{1.1}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{)}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{tight\PYGZus{}layout}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{savefig}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{RUTA\PYGZus{}GRAF}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{/rosa\PYGZus{}vientos\PYGZus{}colorizada.pdf}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{dpi}\PYG{o}{=}\PYG{l+m+mi}{300}\PYG{p}{,} \PYG{n}{bbox\PYGZus{}inches}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{tight}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{close}\PYG{p}{(}\PYG{p}{)}
+
+    \PYG{k}{def}\PYG{+w}{ }\PYG{n+nf}{variacion\PYGZus{}temporal}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{)}\PYG{p}{:}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{figure}\PYG{p}{(}\PYG{n}{figsize}\PYG{o}{=}\PYG{p}{(}\PYG{l+m+mi}{12}\PYG{p}{,} \PYG{l+m+mi}{8}\PYG{p}{)}\PYG{p}{)}
+        
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplot}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{)}
+        \PYG{n}{media\PYGZus{}mensual} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{o}{.}\PYG{n}{groupby}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{month}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}\PYG{o}{.}\PYG{n}{wind\PYGZus{}speed}\PYG{o}{.}\PYG{n}{mean}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n}{meses\PYGZus{}txt} \PYG{o}{=} \PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Ene}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Feb}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Mar}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Abr}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{May}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Jun}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Jul}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Ago}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Sep}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Oct}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Nov}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Dic}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{bar}\PYG{p}{(}\PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{13}\PYG{p}{)}\PYG{p}{,} \PYG{p}{[}\PYG{n}{media\PYGZus{}mensual}\PYG{o}{.}\PYG{n}{get}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{13}\PYG{p}{)}\PYG{p}{]}\PYG{p}{,} 
+                \PYG{n}{color}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{lightgreen}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{alpha}\PYG{o}{=}\PYG{l+m+mf}{0.8}\PYG{p}{,} \PYG{n}{edgecolor}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{black}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{xlabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Mes}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{ylabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Velocidad Promedio (m/s)}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{title}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Variación Mensual de la Velocidad del Viento}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{xticks}\PYG{p}{(}\PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{13}\PYG{p}{)}\PYG{p}{,} \PYG{n}{meses\PYGZus{}txt}\PYG{p}{,} \PYG{n}{rotation}\PYG{o}{=}\PYG{l+m+mi}{45}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{grid}\PYG{p}{(}\PYG{n}{alpha}\PYG{o}{=}\PYG{l+m+mf}{0.3}\PYG{p}{)}
+        
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplot}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{)}
+        \PYG{n}{media\PYGZus{}horaria} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{o}{.}\PYG{n}{groupby}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{hour}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}\PYG{o}{.}\PYG{n}{wind\PYGZus{}speed}\PYG{o}{.}\PYG{n}{mean}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{24}\PYG{p}{)}\PYG{p}{,} \PYG{p}{[}\PYG{n}{media\PYGZus{}horaria}\PYG{o}{.}\PYG{n}{get}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{24}\PYG{p}{)}\PYG{p}{]}\PYG{p}{,} 
+                \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{o\PYGZhy{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{color}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{blue}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{linewidth}\PYG{o}{=}\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{n}{markersize}\PYG{o}{=}\PYG{l+m+mi}{6}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{xlabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Hora del Día}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{ylabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Velocidad Promedio (m/s)}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{title}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Variación Diaria de la Velocidad del Viento}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{xticks}\PYG{p}{(}\PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{24}\PYG{p}{,} \PYG{l+m+mi}{4}\PYG{p}{)}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{grid}\PYG{p}{(}\PYG{n}{alpha}\PYG{o}{=}\PYG{l+m+mf}{0.3}\PYG{p}{)}
+        
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplot}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{3}\PYG{p}{)}
+        \PYG{n}{muestra} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{o}{.}\PYG{n}{sample}\PYG{p}{(}\PYG{n+nb}{min}\PYG{p}{(}\PYG{l+m+mi}{2000}\PYG{p}{,} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{p}{)}\PYG{p}{)}\PYG{p}{)}\PYG{o}{.}\PYG{n}{sort\PYGZus{}values}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{time}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{muestra}\PYG{o}{.}\PYG{n}{time}\PYG{p}{,} \PYG{n}{muestra}\PYG{o}{.}\PYG{n}{wind\PYGZus{}speed}\PYG{p}{,} \PYG{n}{alpha}\PYG{o}{=}\PYG{l+m+mf}{0.7}\PYG{p}{,} \PYG{n}{color}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{red}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{linewidth}\PYG{o}{=}\PYG{l+m+mf}{0.8}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{xlabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Tiempo}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{ylabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Velocidad del Viento (m/s)}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{title}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Serie Temporal de Velocidad del Viento (Muestra)}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{xticks}\PYG{p}{(}\PYG{n}{rotation}\PYG{o}{=}\PYG{l+m+mi}{45}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{grid}\PYG{p}{(}\PYG{n}{alpha}\PYG{o}{=}\PYG{l+m+mf}{0.3}\PYG{p}{)}
+        
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplot}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{4}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{boxplot}\PYG{p}{(}\PYG{p}{[}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{p}{[}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{o}{.}\PYG{n}{month} \PYG{o}{==} \PYG{n}{i}\PYG{p}{]}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{wind\PYGZus{}speed}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]} \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{13}\PYG{p}{)}\PYG{p}{]}\PYG{p}{,}
+                   \PYG{n}{tick\PYGZus{}labels}\PYG{o}{=}\PYG{n}{meses\PYGZus{}txt}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{xlabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Mes}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{ylabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Velocidad del Viento (m/s)}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{title}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Distribución Mensual de Velocidades}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{xticks}\PYG{p}{(}\PYG{n}{rotation}\PYG{o}{=}\PYG{l+m+mi}{45}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{grid}\PYG{p}{(}\PYG{n}{alpha}\PYG{o}{=}\PYG{l+m+mf}{0.3}\PYG{p}{)}
+        
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{suptitle}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Análisis Temporal del Viento \PYGZhy{} Santa Cruz, Bolivia}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} 
+                    \PYG{n}{fontsize}\PYG{o}{=}\PYG{l+m+mi}{16}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{y}\PYG{o}{=}\PYG{l+m+mf}{0.98}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{tight\PYGZus{}layout}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{savefig}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{RUTA\PYGZus{}GRAF}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{/variacion\PYGZus{}temporal.pdf}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{dpi}\PYG{o}{=}\PYG{l+m+mi}{300}\PYG{p}{,} \PYG{n}{bbox\PYGZus{}inches}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{tight}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{close}\PYG{p}{(}\PYG{p}{)}
+
+    \PYG{k}{def}\PYG{+w}{ }\PYG{n+nf}{curva\PYGZus{}potencia\PYGZus{}aerogenerador}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{d\PYGZus{}rotor}\PYG{o}{=}\PYG{l+m+mi}{100}\PYG{p}{)}\PYG{p}{:}
+        \PYG{n}{area} \PYG{o}{=} \PYG{n}{math}\PYG{o}{.}\PYG{n}{pi} \PYG{o}{*} \PYG{p}{(}\PYG{n}{d\PYGZus{}rotor} \PYG{o}{/} \PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{*}\PYG{o}{*} \PYG{l+m+mi}{2}
+        \PYG{k}{def}\PYG{+w}{ }\PYG{n+nf}{p}\PYG{p}{(}\PYG{n}{v}\PYG{p}{)}\PYG{p}{:}
+            \PYG{k}{if} \PYG{n}{v} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{3}\PYG{p}{:} \PYG{k}{return} \PYG{l+m+mi}{0}
+            \PYG{k}{if} \PYG{n}{v} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{12}\PYG{p}{:} \PYG{k}{return} \PYG{l+m+mf}{0.5} \PYG{o}{*} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{densidad\PYGZus{}aire} \PYG{o}{*} \PYG{n}{area} \PYG{o}{*} \PYG{n}{v} \PYG{o}{*}\PYG{o}{*} \PYG{l+m+mi}{3} \PYG{o}{*} \PYG{l+m+mf}{0.4} \PYG{o}{/} \PYG{l+m+mi}{1000}
+            \PYG{k}{if} \PYG{n}{v} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{25}\PYG{p}{:} \PYG{k}{return} \PYG{l+m+mf}{0.5} \PYG{o}{*} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{densidad\PYGZus{}aire} \PYG{o}{*} \PYG{n}{area} \PYG{o}{*} \PYG{l+m+mi}{12} \PYG{o}{*}\PYG{o}{*} \PYG{l+m+mi}{3} \PYG{o}{*} \PYG{l+m+mf}{0.4} \PYG{o}{/} \PYG{l+m+mi}{1000}
+            \PYG{k}{return} \PYG{l+m+mi}{0}
+        \PYG{k}{return} \PYG{n}{np}\PYG{o}{.}\PYG{n}{vectorize}\PYG{p}{(}\PYG{n}{p}\PYG{p}{)}
+
+    \PYG{k}{def}\PYG{+w}{ }\PYG{n+nf}{analisis\PYGZus{}potencia}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{)}\PYG{p}{:}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{figure}\PYG{p}{(}\PYG{n}{figsize}\PYG{o}{=}\PYG{p}{(}\PYG{l+m+mi}{12}\PYG{p}{,} \PYG{l+m+mi}{8}\PYG{p}{)}\PYG{p}{)}
+        
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplot}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{)}
+        \PYG{n}{v\PYGZus{}curva} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{linspace}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{30}\PYG{p}{,} \PYG{l+m+mi}{100}\PYG{p}{)}
+        \PYG{n}{p\PYGZus{}curva} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{curva\PYGZus{}potencia\PYGZus{}aerogenerador}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{v\PYGZus{}curva}\PYG{p}{,} \PYG{n}{p\PYGZus{}curva}\PYG{p}{(}\PYG{n}{v\PYGZus{}curva}\PYG{p}{)}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{b\PYGZhy{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{lw}\PYG{o}{=}\PYG{l+m+mi}{3}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{xlabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Velocidad del Viento (m/s)}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{ylabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Potencia Generada (kW)}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{title}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Curva de Potencia del Aerogenerador}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{grid}\PYG{p}{(}\PYG{n}{alpha}\PYG{o}{=}\PYG{l+m+mf}{0.3}\PYG{p}{)}
+        
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{potencia\PYGZus{}generada}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]} \PYG{o}{=} \PYG{n}{p\PYGZus{}curva}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{o}{.}\PYG{n}{wind\PYGZus{}speed}\PYG{p}{)}
+        
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplot}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{hist}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{o}{.}\PYG{n}{potencia\PYGZus{}generada}\PYG{p}{,} \PYG{n}{bins}\PYG{o}{=}\PYG{l+m+mi}{50}\PYG{p}{,} \PYG{n}{alpha}\PYG{o}{=}\PYG{l+m+mf}{0.7}\PYG{p}{,} \PYG{n}{color}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{orange}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{edgecolor}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{black}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{xlabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Potencia Generada (kW)}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{ylabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Frecuencia}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{title}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Distribución de Potencia Generada}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{grid}\PYG{p}{(}\PYG{n}{alpha}\PYG{o}{=}\PYG{l+m+mf}{0.3}\PYG{p}{)}
+        
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplot}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{3}\PYG{p}{)}
+        \PYG{n}{p\PYGZus{}mensual} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{o}{.}\PYG{n}{groupby}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{month}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}\PYG{o}{.}\PYG{n}{potencia\PYGZus{}generada}\PYG{o}{.}\PYG{n}{mean}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n}{meses\PYGZus{}txt} \PYG{o}{=} \PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Ene}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Feb}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Mar}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Abr}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{May}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Jun}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Jul}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Ago}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Sep}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Oct}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Nov}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Dic}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{bar}\PYG{p}{(}\PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{13}\PYG{p}{)}\PYG{p}{,} \PYG{p}{[}\PYG{n}{p\PYGZus{}mensual}\PYG{o}{.}\PYG{n}{get}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{13}\PYG{p}{)}\PYG{p}{]}\PYG{p}{,}
+                \PYG{n}{color}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{green}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{alpha}\PYG{o}{=}\PYG{l+m+mf}{0.8}\PYG{p}{,} \PYG{n}{edgecolor}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{black}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{xlabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Mes}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{ylabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Potencia Promedio (kW)}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{title}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Generación Mensual de Energía}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{xticks}\PYG{p}{(}\PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{13}\PYG{p}{)}\PYG{p}{,} \PYG{n}{meses\PYGZus{}txt}\PYG{p}{,} \PYG{n}{rotation}\PYG{o}{=}\PYG{l+m+mi}{45}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{grid}\PYG{p}{(}\PYG{n}{alpha}\PYG{o}{=}\PYG{l+m+mf}{0.3}\PYG{p}{)}
+        
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplot}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{4}\PYG{p}{)}
+        \PYG{n}{horas\PYGZus{}op} \PYG{o}{=} \PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{o}{.}\PYG{n}{potencia\PYGZus{}generada} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{)}\PYG{o}{.}\PYG{n}{sum}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n}{horas\PYGZus{}nom} \PYG{o}{=} \PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{o}{.}\PYG{n}{potencia\PYGZus{}generada} \PYG{o}{\PYGZgt{}}\PYG{o}{=} \PYG{l+m+mi}{1500}\PYG{p}{)}\PYG{o}{.}\PYG{n}{sum}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n}{etiquetas} \PYG{o}{=} \PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Sin Generación}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Generación Parcial}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Potencia Nominal}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}
+        \PYG{n}{tamanios} \PYG{o}{=} \PYG{p}{[}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n}{horas\PYGZus{}op}\PYG{p}{,} \PYG{n}{horas\PYGZus{}op} \PYG{o}{\PYGZhy{}} \PYG{n}{horas\PYGZus{}nom}\PYG{p}{,} \PYG{n}{horas\PYGZus{}nom}\PYG{p}{]}
+        \PYG{n}{colores\PYGZus{}pie} \PYG{o}{=} \PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{\PYGZsh{}ff9999}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{\PYGZsh{}66b3ff}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{\PYGZsh{}99ff99}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{pie}\PYG{p}{(}\PYG{n}{tamanios}\PYG{p}{,} \PYG{n}{labels}\PYG{o}{=}\PYG{n}{etiquetas}\PYG{p}{,} \PYG{n}{autopct}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+si}{\PYGZpc{}1.1f}\PYG{l+s+si}{\PYGZpc{}\PYGZpc{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{startangle}\PYG{o}{=}\PYG{l+m+mi}{90}\PYG{p}{,} \PYG{n}{colors}\PYG{o}{=}\PYG{n}{colores\PYGZus{}pie}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{title}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Estados de Operación del Aerogenerador}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{suptitle}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Análisis de Potencia Eólica \PYGZhy{} Santa Cruz, Bolivia}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} 
+                    \PYG{n}{fontsize}\PYG{o}{=}\PYG{l+m+mi}{16}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{y}\PYG{o}{=}\PYG{l+m+mf}{0.98}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{tight\PYGZus{}layout}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{savefig}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{RUTA\PYGZus{}GRAF}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{/analisis\PYGZus{}potencia.pdf}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{dpi}\PYG{o}{=}\PYG{l+m+mi}{300}\PYG{p}{,} \PYG{n}{bbox\PYGZus{}inches}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{tight}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{close}\PYG{p}{(}\PYG{p}{)}
+
+    \PYG{k}{def}\PYG{+w}{ }\PYG{n+nf}{mapa\PYGZus{}estatico\PYGZus{}velocidades}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{)}\PYG{p}{:}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{figure}\PYG{p}{(}\PYG{n}{figsize}\PYG{o}{=}\PYG{p}{(}\PYG{l+m+mi}{12}\PYG{p}{,} \PYG{l+m+mi}{10}\PYG{p}{)}\PYG{p}{)}
+        \PYG{n}{sc} \PYG{o}{=} \PYG{n}{plt}\PYG{o}{.}\PYG{n}{scatter}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{o}{.}\PYG{n}{longitude}\PYG{p}{,} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{o}{.}\PYG{n}{latitude}\PYG{p}{,} \PYG{n}{c}\PYG{o}{=}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{o}{.}\PYG{n}{wind\PYGZus{}speed}\PYG{p}{,} 
+                        \PYG{n}{cmap}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{viridis}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{alpha}\PYG{o}{=}\PYG{l+m+mf}{0.7}\PYG{p}{,} \PYG{n}{s}\PYG{o}{=}\PYG{l+m+mi}{20}\PYG{p}{,} \PYG{n}{edgecolors}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{black}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{linewidth}\PYG{o}{=}\PYG{l+m+mf}{0.1}\PYG{p}{)}
+        \PYG{n}{cbar} \PYG{o}{=} \PYG{n}{plt}\PYG{o}{.}\PYG{n}{colorbar}\PYG{p}{(}\PYG{n}{sc}\PYG{p}{,} \PYG{n}{shrink}\PYG{o}{=}\PYG{l+m+mf}{0.8}\PYG{p}{)}
+        \PYG{n}{cbar}\PYG{o}{.}\PYG{n}{set\PYGZus{}label}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Velocidad del Viento (m/s)}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontsize}\PYG{o}{=}\PYG{l+m+mi}{12}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{xlabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Longitud (°)}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontsize}\PYG{o}{=}\PYG{l+m+mi}{12}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{ylabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Latitud (°)}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontsize}\PYG{o}{=}\PYG{l+m+mi}{12}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{title}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Distribución Espacial de la Velocidad del Viento}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s+s1}{Santa Cruz, Bolivia}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} 
+                 \PYG{n}{fontsize}\PYG{o}{=}\PYG{l+m+mi}{14}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{grid}\PYG{p}{(}\PYG{n}{alpha}\PYG{o}{=}\PYG{l+m+mf}{0.3}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{tight\PYGZus{}layout}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{savefig}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{RUTA\PYGZus{}GRAF}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{/mapa\PYGZus{}velocidades.pdf}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{dpi}\PYG{o}{=}\PYG{l+m+mi}{300}\PYG{p}{,} \PYG{n}{bbox\PYGZus{}inches}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{tight}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{close}\PYG{p}{(}\PYG{p}{)}
+
+    \PYG{k}{def}\PYG{+w}{ }\PYG{n+nf}{mapa\PYGZus{}potencial\PYGZus{}interactivo}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{)}\PYG{p}{:}
+        \PYG{n}{pot} \PYG{o}{=} \PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{o}{.}\PYG{n}{groupby}\PYG{p}{(}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{latitude}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{longitude}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}\PYG{p}{)}
+               \PYG{o}{.}\PYG{n}{agg}\PYG{p}{(}\PYG{p}{\PYGZob{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{wind\PYGZus{}speed}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{:} \PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{mean}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{std}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{count}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}\PYG{p}{\PYGZcb{}}\PYG{p}{)}\PYG{p}{)}
+        \PYG{n}{pot}\PYG{o}{.}\PYG{n}{columns} \PYG{o}{=} \PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{vel\PYGZus{}media}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{vel\PYGZus{}std}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{n}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}
+        \PYG{n}{pot} \PYG{o}{=} \PYG{n}{pot}\PYG{o}{.}\PYG{n}{reset\PYGZus{}index}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n}{pot}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{potencial\PYGZus{}eolico}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mf}{0.5} \PYG{o}{*} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{densidad\PYGZus{}aire} \PYG{o}{*} \PYG{n}{pot}\PYG{o}{.}\PYG{n}{vel\PYGZus{}media} \PYG{o}{*}\PYG{o}{*} \PYG{l+m+mi}{3}
+        
+        \PYG{n}{fig} \PYG{o}{=} \PYG{n}{go}\PYG{o}{.}\PYG{n}{Figure}\PYG{p}{(}\PYG{p}{)}
+        
+        \PYG{n}{fig}\PYG{o}{.}\PYG{n}{add\PYGZus{}trace}\PYG{p}{(}\PYG{n}{go}\PYG{o}{.}\PYG{n}{Scattermapbox}\PYG{p}{(}
+            \PYG{n}{lat}\PYG{o}{=}\PYG{n}{pot}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{latitude}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}\PYG{p}{,}
+            \PYG{n}{lon}\PYG{o}{=}\PYG{n}{pot}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{longitude}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}\PYG{p}{,}
+            \PYG{n}{mode}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{markers}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,}
+            \PYG{n}{marker}\PYG{o}{=}\PYG{n+nb}{dict}\PYG{p}{(}
+                \PYG{n}{size}\PYG{o}{=}\PYG{n}{pot}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{vel\PYGZus{}media}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]} \PYG{o}{*} \PYG{l+m+mi}{3}\PYG{p}{,}
+                \PYG{n}{color}\PYG{o}{=}\PYG{n}{pot}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{potencial\PYGZus{}eolico}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}\PYG{p}{,}
+                \PYG{n}{colorscale}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Viridis}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,}
+                \PYG{n}{showscale}\PYG{o}{=}\PYG{k+kc}{True}\PYG{p}{,}
+                \PYG{n}{colorbar}\PYG{o}{=}\PYG{n+nb}{dict}\PYG{p}{(}
+                    \PYG{n}{title}\PYG{o}{=}\PYG{n+nb}{dict}\PYG{p}{(}
+                        \PYG{n}{text}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Potencial Eólico (W/m²)}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+                        \PYG{n}{font}\PYG{o}{=}\PYG{n+nb}{dict}\PYG{p}{(}\PYG{n}{size}\PYG{o}{=}\PYG{l+m+mi}{14}\PYG{p}{)}
+                    \PYG{p}{)}\PYG{p}{,}
+                    \PYG{n}{tickfont}\PYG{o}{=}\PYG{n+nb}{dict}\PYG{p}{(}\PYG{n}{size}\PYG{o}{=}\PYG{l+m+mi}{12}\PYG{p}{)}  
+                \PYG{p}{)}\PYG{p}{,}
+                \PYG{n}{sizemode}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{diameter}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,}
+                \PYG{n}{opacity}\PYG{o}{=}\PYG{l+m+mf}{0.8}\PYG{p}{,}
+            \PYG{p}{)}\PYG{p}{,}
+            \PYG{n}{text}\PYG{o}{=}\PYG{p}{[}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Lat: }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{lat}\PYG{l+s+si}{:}\PYG{l+s+s1}{.3f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{°\PYGZlt{}br\PYGZgt{}Lon: }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{lon}\PYG{l+s+si}{:}\PYG{l+s+s1}{.3f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{°\PYGZlt{}br\PYGZgt{}Vel. Media: }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{vel}\PYG{l+s+si}{:}\PYG{l+s+s1}{.2f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{ m/s\PYGZlt{}br\PYGZgt{}Potencial: }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{pot}\PYG{l+s+si}{:}\PYG{l+s+s1}{.0f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{ W/m²}\PYG{l+s+s1}{\PYGZsq{}}
+                  \PYG{k}{for} \PYG{n}{lat}\PYG{p}{,} \PYG{n}{lon}\PYG{p}{,} \PYG{n}{vel}\PYG{p}{,} \PYG{n}{pot} \PYG{o+ow}{in} \PYG{n+nb}{zip}\PYG{p}{(}\PYG{n}{pot}\PYG{o}{.}\PYG{n}{latitude}\PYG{p}{,} \PYG{n}{pot}\PYG{o}{.}\PYG{n}{longitude}\PYG{p}{,} \PYG{n}{pot}\PYG{o}{.}\PYG{n}{vel\PYGZus{}media}\PYG{p}{,} \PYG{n}{pot}\PYG{o}{.}\PYG{n}{potencial\PYGZus{}eolico}\PYG{p}{)}\PYG{p}{]}\PYG{p}{,}
+            \PYG{n}{hovertemplate}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{\PYGZpc{}}\PYG{l+s+si}{\PYGZob{}text\PYGZcb{}}\PYG{l+s+s1}{\PYGZlt{}extra\PYGZgt{}\PYGZlt{}/extra\PYGZgt{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,}
+            \PYG{n}{name}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Potencial Eólico}\PYG{l+s+s1}{\PYGZsq{}}
+        \PYG{p}{)}\PYG{p}{)}
+        
+        \PYG{n}{centro\PYGZus{}lat} \PYG{o}{=} \PYG{n}{pot}\PYG{o}{.}\PYG{n}{latitude}\PYG{o}{.}\PYG{n}{mean}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n}{centro\PYGZus{}lon} \PYG{o}{=} \PYG{n}{pot}\PYG{o}{.}\PYG{n}{longitude}\PYG{o}{.}\PYG{n}{mean}\PYG{p}{(}\PYG{p}{)}
+        
+        \PYG{n}{fig}\PYG{o}{.}\PYG{n}{update\PYGZus{}layout}\PYG{p}{(}
+            \PYG{n}{title}\PYG{o}{=}\PYG{n+nb}{dict}\PYG{p}{(}
+                \PYG{n}{text}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Mapa de Potencial Eólico \PYGZhy{} Santa Cruz, Bolivia}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+                \PYG{n}{x}\PYG{o}{=}\PYG{l+m+mf}{0.5}\PYG{p}{,}
+                \PYG{n}{font}\PYG{o}{=}\PYG{n+nb}{dict}\PYG{p}{(}\PYG{n}{size}\PYG{o}{=}\PYG{l+m+mi}{18}\PYG{p}{,} \PYG{n}{color}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{black}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+            \PYG{p}{)}\PYG{p}{,}
+            \PYG{n}{mapbox}\PYG{o}{=}\PYG{n+nb}{dict}\PYG{p}{(}
+                \PYG{n}{style}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{open\PYGZhy{}street\PYGZhy{}map}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+                \PYG{n}{center}\PYG{o}{=}\PYG{n+nb}{dict}\PYG{p}{(}\PYG{n}{lat}\PYG{o}{=}\PYG{n}{centro\PYGZus{}lat}\PYG{p}{,} \PYG{n}{lon}\PYG{o}{=}\PYG{n}{centro\PYGZus{}lon}\PYG{p}{)}\PYG{p}{,}
+                \PYG{n}{zoom}\PYG{o}{=}\PYG{l+m+mi}{8}
+            \PYG{p}{)}\PYG{p}{,}
+            \PYG{n}{width}\PYG{o}{=}\PYG{l+m+mi}{1200}\PYG{p}{,}
+            \PYG{n}{height}\PYG{o}{=}\PYG{l+m+mi}{800}\PYG{p}{,}
+            \PYG{n}{font}\PYG{o}{=}\PYG{n+nb}{dict}\PYG{p}{(}\PYG{n}{size}\PYG{o}{=}\PYG{l+m+mi}{12}\PYG{p}{)}
+        \PYG{p}{)}
+        
+        \PYG{n}{fig}\PYG{o}{.}\PYG{n}{write\PYGZus{}html}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{RUTA\PYGZus{}GRAF}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{/mapa\PYGZus{}potencial\PYGZus{}interactivo.html}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+
+    \PYG{k}{def}\PYG{+w}{ }\PYG{n+nf}{estadisticas\PYGZus{}descriptivas}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{)}\PYG{p}{:}
+        \PYG{n}{stats} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{wind\PYGZus{}speed}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}\PYG{o}{.}\PYG{n}{describe}\PYG{p}{(}\PYG{p}{)}
+        
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{figure}\PYG{p}{(}\PYG{n}{figsize}\PYG{o}{=}\PYG{p}{(}\PYG{l+m+mi}{12}\PYG{p}{,} \PYG{l+m+mi}{8}\PYG{p}{)}\PYG{p}{)}
+        
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplot}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{hist}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{o}{.}\PYG{n}{wind\PYGZus{}speed}\PYG{p}{,} \PYG{n}{bins}\PYG{o}{=}\PYG{l+m+mi}{30}\PYG{p}{,} \PYG{n}{alpha}\PYG{o}{=}\PYG{l+m+mf}{0.7}\PYG{p}{,} \PYG{n}{color}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{lightblue}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{edgecolor}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{black}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{axvline}\PYG{p}{(}\PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{mean}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}\PYG{p}{,} \PYG{n}{color}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{red}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{linestyle}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{\PYGZhy{}\PYGZhy{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{linewidth}\PYG{o}{=}\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{n}{label}\PYG{o}{=}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Media: }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}\PYG{l+s+si}{:}\PYG{l+s+s1}{.2f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{ m/s}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{axvline}\PYG{p}{(}\PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{50}\PYG{l+s+s1}{\PYGZpc{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}\PYG{p}{,} \PYG{n}{color}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{green}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{linestyle}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{\PYGZhy{}\PYGZhy{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{linewidth}\PYG{o}{=}\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{n}{label}\PYG{o}{=}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Mediana: }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{50}\PYG{l+s+s2}{\PYGZpc{}}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}\PYG{l+s+si}{:}\PYG{l+s+s1}{.2f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{ m/s}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{xlabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Velocidad del Viento (m/s)}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{ylabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Frecuencia}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{title}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Histograma de Velocidades del Viento}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{legend}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{grid}\PYG{p}{(}\PYG{n}{alpha}\PYG{o}{=}\PYG{l+m+mf}{0.3}\PYG{p}{)}
+        
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplot}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{)}
+        \PYG{n}{Q1} \PYG{o}{=} \PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{25}\PYG{l+s+s1}{\PYGZpc{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}
+        \PYG{n}{Q3} \PYG{o}{=} \PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{75}\PYG{l+s+s1}{\PYGZpc{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}
+        \PYG{n}{IQR} \PYG{o}{=} \PYG{n}{Q3} \PYG{o}{\PYGZhy{}} \PYG{n}{Q1}
+        \PYG{n}{whisker\PYGZus{}low} \PYG{o}{=} \PYG{n+nb}{max}\PYG{p}{(}\PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{min}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}\PYG{p}{,} \PYG{n}{Q1} \PYG{o}{\PYGZhy{}} \PYG{l+m+mf}{1.5} \PYG{o}{*} \PYG{n}{IQR}\PYG{p}{)}
+        \PYG{n}{whisker\PYGZus{}high} \PYG{o}{=} \PYG{n+nb}{min}\PYG{p}{(}\PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{max}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}\PYG{p}{,} \PYG{n}{Q3} \PYG{o}{+} \PYG{l+m+mf}{1.5} \PYG{o}{*} \PYG{n}{IQR}\PYG{p}{)}
+        
+        \PYG{n}{bp} \PYG{o}{=} \PYG{n}{plt}\PYG{o}{.}\PYG{n}{boxplot}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{o}{.}\PYG{n}{wind\PYGZus{}speed}\PYG{p}{,} \PYG{n}{patch\PYGZus{}artist}\PYG{o}{=}\PYG{k+kc}{True}\PYG{p}{)}
+        \PYG{n}{bp}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{boxes}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}\PYG{o}{.}\PYG{n}{set\PYGZus{}facecolor}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{lightgreen}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{bp}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{boxes}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}\PYG{o}{.}\PYG{n}{set\PYGZus{}alpha}\PYG{p}{(}\PYG{l+m+mf}{0.7}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{ylabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Velocidad del Viento (m/s)}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{title}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Diagrama de Caja de Velocidades}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{grid}\PYG{p}{(}\PYG{n}{alpha}\PYG{o}{=}\PYG{l+m+mf}{0.3}\PYG{p}{)}
+        
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplot}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{3}\PYG{p}{)}
+        \PYG{n}{percentiles} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{percentile}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{o}{.}\PYG{n}{wind\PYGZus{}speed}\PYG{p}{,} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{101}\PYG{p}{,} \PYG{l+m+mi}{5}\PYG{p}{)}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{101}\PYG{p}{,} \PYG{l+m+mi}{5}\PYG{p}{)}\PYG{p}{,} \PYG{n}{percentiles}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{o\PYGZhy{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{color}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{purple}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{linewidth}\PYG{o}{=}\PYG{l+m+mi}{2}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{xlabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Percentil}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{ylabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Velocidad del Viento (m/s)}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{title}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Curva de Percentiles}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{grid}\PYG{p}{(}\PYG{n}{alpha}\PYG{o}{=}\PYG{l+m+mf}{0.3}\PYG{p}{)}
+        
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplot}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{4}\PYG{p}{)}
+        \PYG{n}{velocidades\PYGZus{}ordenadas} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{sort}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{o}{.}\PYG{n}{wind\PYGZus{}speed}\PYG{p}{)}
+        \PYG{n}{p} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{arange}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{velocidades\PYGZus{}ordenadas}\PYG{p}{)} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{/} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{velocidades\PYGZus{}ordenadas}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{velocidades\PYGZus{}ordenadas}\PYG{p}{,} \PYG{n}{p}\PYG{p}{,} \PYG{n}{color}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{orange}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{linewidth}\PYG{o}{=}\PYG{l+m+mi}{2}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{xlabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Velocidad del Viento (m/s)}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{ylabel}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Probabilidad Acumulada}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{title}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Función de Distribución Acumulativa}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{grid}\PYG{p}{(}\PYG{n}{alpha}\PYG{o}{=}\PYG{l+m+mf}{0.3}\PYG{p}{)}
+        
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{suptitle}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Análisis Estadístico Descriptivo \PYGZhy{} Santa Cruz, Bolivia}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} 
+                    \PYG{n}{fontsize}\PYG{o}{=}\PYG{l+m+mi}{16}\PYG{p}{,} \PYG{n}{fontweight}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{bold}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{y}\PYG{o}{=}\PYG{l+m+mf}{0.98}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{tight\PYGZus{}layout}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{savefig}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{RUTA\PYGZus{}GRAF}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{/estadisticas\PYGZus{}descriptivas.pdf}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{dpi}\PYG{o}{=}\PYG{l+m+mi}{300}\PYG{p}{,} \PYG{n}{bbox\PYGZus{}inches}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{tight}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{plt}\PYG{o}{.}\PYG{n}{close}\PYG{p}{(}\PYG{p}{)}
+    
+    \PYG{k}{def}\PYG{+w}{ }\PYG{n+nf}{generar\PYGZus{}reporte\PYGZus{}detallado}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{)}\PYG{p}{:}
+\PYG{+w}{        }\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Genera un reporte detallado en formato .txt sobre las condiciones eólicas\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+        
+        \PYG{c+c1}{\PYGZsh{} Cálculos estadísticos básicos}
+        \PYG{n}{stats} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{wind\PYGZus{}speed}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}\PYG{o}{.}\PYG{n}{describe}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n}{velocidad\PYGZus{}media} \PYG{o}{=} \PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{mean}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}
+        \PYG{n}{velocidad\PYGZus{}mediana} \PYG{o}{=} \PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{50}\PYG{l+s+s1}{\PYGZpc{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}
+        \PYG{n}{velocidad\PYGZus{}max} \PYG{o}{=} \PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{max}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}
+        \PYG{n}{velocidad\PYGZus{}min} \PYG{o}{=} \PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{min}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}
+        \PYG{n}{desviacion\PYGZus{}std} \PYG{o}{=} \PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{std}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}
+        
+        \PYG{c+c1}{\PYGZsh{} Análisis de distribución Weibull}
+        \PYG{n}{c}\PYG{p}{,} \PYG{n}{k}\PYG{p}{,} \PYG{n}{\PYGZus{}}\PYG{p}{,} \PYG{n}{\PYGZus{}} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{distribucion\PYGZus{}weibull}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{wind\PYGZus{}speed}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}\PYG{p}{)}
+        
+        \PYG{c+c1}{\PYGZsh{} Análisis de potencia}
+        \PYG{n}{p\PYGZus{}curva} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{curva\PYGZus{}potencia\PYGZus{}aerogenerador}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{potencia\PYGZus{}temp}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]} \PYG{o}{=} \PYG{n}{p\PYGZus{}curva}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{wind\PYGZus{}speed}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}\PYG{p}{)}
+        \PYG{n}{potencia\PYGZus{}media} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{potencia\PYGZus{}temp}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}\PYG{o}{.}\PYG{n}{mean}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n}{horas\PYGZus{}totales} \PYG{o}{=} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{p}{)}
+        \PYG{n}{horas\PYGZus{}operacion} \PYG{o}{=} \PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{potencia\PYGZus{}temp}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{)}\PYG{o}{.}\PYG{n}{sum}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n}{horas\PYGZus{}nominal} \PYG{o}{=} \PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{potencia\PYGZus{}temp}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]} \PYG{o}{\PYGZgt{}}\PYG{o}{=} \PYG{l+m+mi}{1500}\PYG{p}{)}\PYG{o}{.}\PYG{n}{sum}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n}{factor\PYGZus{}capacidad} \PYG{o}{=} \PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{potencia\PYGZus{}temp}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}\PYG{o}{.}\PYG{n}{sum}\PYG{p}{(}\PYG{p}{)} \PYG{o}{/} \PYG{p}{(}\PYG{n}{horas\PYGZus{}totales} \PYG{o}{*} \PYG{l+m+mi}{2000}\PYG{p}{)}\PYG{p}{)} \PYG{o}{*} \PYG{l+m+mi}{100}  \PYG{c+c1}{\PYGZsh{} Asumiendo 2MW nominal}
+        
+        \PYG{c+c1}{\PYGZsh{} Análisis temporal}
+        \PYG{n}{vel\PYGZus{}por\PYGZus{}mes} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{o}{.}\PYG{n}{groupby}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{month}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{wind\PYGZus{}speed}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}\PYG{o}{.}\PYG{n}{mean}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n}{mejor\PYGZus{}mes} \PYG{o}{=} \PYG{n}{vel\PYGZus{}por\PYGZus{}mes}\PYG{o}{.}\PYG{n}{idxmax}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n}{peor\PYGZus{}mes} \PYG{o}{=} \PYG{n}{vel\PYGZus{}por\PYGZus{}mes}\PYG{o}{.}\PYG{n}{idxmin}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n}{vel\PYGZus{}mejor\PYGZus{}mes} \PYG{o}{=} \PYG{n}{vel\PYGZus{}por\PYGZus{}mes}\PYG{o}{.}\PYG{n}{max}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n}{vel\PYGZus{}peor\PYGZus{}mes} \PYG{o}{=} \PYG{n}{vel\PYGZus{}por\PYGZus{}mes}\PYG{o}{.}\PYG{n}{min}\PYG{p}{(}\PYG{p}{)}
+        
+        \PYG{n}{vel\PYGZus{}por\PYGZus{}hora} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{o}{.}\PYG{n}{groupby}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{hour}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{wind\PYGZus{}speed}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}\PYG{o}{.}\PYG{n}{mean}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n}{mejor\PYGZus{}hora} \PYG{o}{=} \PYG{n}{vel\PYGZus{}por\PYGZus{}hora}\PYG{o}{.}\PYG{n}{idxmax}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n}{peor\PYGZus{}hora} \PYG{o}{=} \PYG{n}{vel\PYGZus{}por\PYGZus{}hora}\PYG{o}{.}\PYG{n}{idxmin}\PYG{p}{(}\PYG{p}{)}
+        
+        \PYG{c+c1}{\PYGZsh{} Análisis de viabilidad económica}
+        \PYG{n}{velocidades\PYGZus{}utiles} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{p}{[}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{wind\PYGZus{}speed}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]} \PYG{o}{\PYGZgt{}}\PYG{o}{=} \PYG{l+m+mi}{3}\PYG{p}{)} \PYG{o}{\PYGZam{}} \PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{wind\PYGZus{}speed}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]} \PYG{o}{\PYGZlt{}}\PYG{o}{=} \PYG{l+m+mi}{25}\PYG{p}{)}\PYG{p}{]}
+        \PYG{n}{porcentaje\PYGZus{}velocidades\PYGZus{}utiles} \PYG{o}{=} \PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{velocidades\PYGZus{}utiles}\PYG{p}{)} \PYG{o}{/} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{p}{)}\PYG{p}{)} \PYG{o}{*} \PYG{l+m+mi}{100}
+        
+        \PYG{c+c1}{\PYGZsh{} Clasificación del recurso eólico según estándares internacionales}
+        \PYG{k}{if} \PYG{n}{velocidad\PYGZus{}media} \PYG{o}{\PYGZgt{}}\PYG{o}{=} \PYG{l+m+mf}{7.5}\PYG{p}{:}
+            \PYG{n}{clasificacion\PYGZus{}recurso} \PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{EXCELENTE}\PYG{l+s+s2}{\PYGZdq{}}
+            \PYG{n}{viabilidad} \PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{ALTAMENTE VIABLE}\PYG{l+s+s2}{\PYGZdq{}}
+        \PYG{k}{elif} \PYG{n}{velocidad\PYGZus{}media} \PYG{o}{\PYGZgt{}}\PYG{o}{=} \PYG{l+m+mf}{6.5}\PYG{p}{:}
+            \PYG{n}{clasificacion\PYGZus{}recurso} \PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{BUENO}\PYG{l+s+s2}{\PYGZdq{}}
+            \PYG{n}{viabilidad} \PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{VIABLE}\PYG{l+s+s2}{\PYGZdq{}}
+        \PYG{k}{elif} \PYG{n}{velocidad\PYGZus{}media} \PYG{o}{\PYGZgt{}}\PYG{o}{=} \PYG{l+m+mf}{5.5}\PYG{p}{:}
+            \PYG{n}{clasificacion\PYGZus{}recurso} \PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{MODERADO}\PYG{l+s+s2}{\PYGZdq{}}
+            \PYG{n}{viabilidad} \PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{MODERADAMENTE VIABLE}\PYG{l+s+s2}{\PYGZdq{}}
+        \PYG{k}{elif} \PYG{n}{velocidad\PYGZus{}media} \PYG{o}{\PYGZgt{}}\PYG{o}{=} \PYG{l+m+mf}{4.5}\PYG{p}{:}
+            \PYG{n}{clasificacion\PYGZus{}recurso} \PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{MARGINAL}\PYG{l+s+s2}{\PYGZdq{}}
+            \PYG{n}{viabilidad} \PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{MARGINALMENTE VIABLE}\PYG{l+s+s2}{\PYGZdq{}}
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{n}{clasificacion\PYGZus{}recurso} \PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{POBRE}\PYG{l+s+s2}{\PYGZdq{}}
+            \PYG{n}{viabilidad} \PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{NO VIABLE}\PYG{l+s+s2}{\PYGZdq{}}
+        
+        \PYG{c+c1}{\PYGZsh{} Potencial energético}
+        \PYG{n}{densidad\PYGZus{}potencia} \PYG{o}{=} \PYG{l+m+mf}{0.5} \PYG{o}{*} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{densidad\PYGZus{}aire} \PYG{o}{*} \PYG{p}{(}\PYG{n}{velocidad\PYGZus{}media} \PYG{o}{*}\PYG{o}{*} \PYG{l+m+mi}{3}\PYG{p}{)}
+        \PYG{n}{energia\PYGZus{}anual\PYGZus{}estimada} \PYG{o}{=} \PYG{n}{potencia\PYGZus{}media} \PYG{o}{*} \PYG{l+m+mi}{8760} \PYG{o}{/} \PYG{l+m+mi}{1000}  \PYG{c+c1}{\PYGZsh{} MWh/año}
+        
+        \PYG{c+c1}{\PYGZsh{} Crear el reporte}
+        \PYG{n}{reporte} \PYG{o}{=} \PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+s2}{    ==================================================================================}
+\PYG{l+s+s2}{                        REPORTE DETALLADO DE ANÁLISIS EÓLICO}
+\PYG{l+s+s2}{                            SANTA CRUZ, BOLIVIA}
+\PYG{l+s+s2}{    ==================================================================================}
+
+\PYG{l+s+s2}{    FECHA DE ANÁLISIS: }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{pd}\PYG{o}{.}\PYG{n}{Timestamp}\PYG{o}{.}\PYG{n}{now}\PYG{p}{(}\PYG{p}{)}\PYG{o}{.}\PYG{n}{strftime}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+si}{\PYGZpc{}d}\PYG{l+s+s1}{/}\PYG{l+s+s1}{\PYGZpc{}}\PYG{l+s+s1}{m/}\PYG{l+s+s1}{\PYGZpc{}}\PYG{l+s+s1}{Y }\PYG{l+s+s1}{\PYGZpc{}}\PYG{l+s+s1}{H:}\PYG{l+s+s1}{\PYGZpc{}}\PYG{l+s+s1}{M:}\PYG{l+s+s1}{\PYGZpc{}}\PYG{l+s+s1}{S}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}\PYG{l+s+si}{\PYGZcb{}}
+\PYG{l+s+s2}{    PERÍODO DE DATOS: }\PYG{l+s+si}{\PYGZob{}}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{time}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}\PYG{o}{.}\PYG{n}{min}\PYG{p}{(}\PYG{p}{)}\PYG{o}{.}\PYG{n}{strftime}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+si}{\PYGZpc{}d}\PYG{l+s+s1}{/}\PYG{l+s+s1}{\PYGZpc{}}\PYG{l+s+s1}{m/}\PYG{l+s+s1}{\PYGZpc{}}\PYG{l+s+s1}{Y}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ \PYGZhy{} }\PYG{l+s+si}{\PYGZob{}}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{time}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}\PYG{o}{.}\PYG{n}{max}\PYG{p}{(}\PYG{p}{)}\PYG{o}{.}\PYG{n}{strftime}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+si}{\PYGZpc{}d}\PYG{l+s+s1}{/}\PYG{l+s+s1}{\PYGZpc{}}\PYG{l+s+s1}{m/}\PYG{l+s+s1}{\PYGZpc{}}\PYG{l+s+s1}{Y}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}\PYG{l+s+si}{\PYGZcb{}}
+\PYG{l+s+s2}{    TOTAL DE REGISTROS: }\PYG{l+s+si}{\PYGZob{}}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{df}\PYG{p}{)}\PYG{l+s+si}{:}\PYG{l+s+s2}{,}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ mediciones}
+
+\PYG{l+s+s2}{    ==================================================================================}
+\PYG{l+s+s2}{    1. ESTADÍSTICAS BÁSICAS DE VELOCIDAD DEL VIENTO}
+\PYG{l+s+s2}{    ==================================================================================}
+
+\PYG{l+s+s2}{    • Velocidad media anual:           }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{velocidad\PYGZus{}media}\PYG{l+s+si}{:}\PYG{l+s+s2}{.2f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ m/s}
+\PYG{l+s+s2}{    • Velocidad mediana:               }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{velocidad\PYGZus{}mediana}\PYG{l+s+si}{:}\PYG{l+s+s2}{.2f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ m/s}
+\PYG{l+s+s2}{    • Velocidad máxima registrada:     }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{velocidad\PYGZus{}max}\PYG{l+s+si}{:}\PYG{l+s+s2}{.2f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ m/s}
+\PYG{l+s+s2}{    • Velocidad mínima registrada:     }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{velocidad\PYGZus{}min}\PYG{l+s+si}{:}\PYG{l+s+s2}{.2f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ m/s}
+\PYG{l+s+s2}{    • Desviación estándar:             }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{desviacion\PYGZus{}std}\PYG{l+s+si}{:}\PYG{l+s+s2}{.2f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ m/s}
+\PYG{l+s+s2}{    • Coeficiente de variación:        }\PYG{l+s+si}{\PYGZob{}}\PYG{p}{(}\PYG{n}{desviacion\PYGZus{}std}\PYG{o}{/}\PYG{n}{velocidad\PYGZus{}media}\PYG{p}{)}\PYG{o}{*}\PYG{l+m+mi}{100}\PYG{l+s+si}{:}\PYG{l+s+s2}{.1f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZpc{}}
+
+\PYG{l+s+s2}{    ==================================================================================}
+\PYG{l+s+s2}{    2. ANÁLISIS DE DISTRIBUCIÓN WEIBULL}
+\PYG{l+s+s2}{    ==================================================================================}
+
+\PYG{l+s+s2}{    • Parámetro de escala (c):         }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{c}\PYG{l+s+si}{:}\PYG{l+s+s2}{.2f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ m/s}
+\PYG{l+s+s2}{    • Parámetro de forma (k):          }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{k}\PYG{l+s+si}{:}\PYG{l+s+s2}{.2f}\PYG{l+s+si}{\PYGZcb{}}
+\PYG{l+s+s2}{    • Calidad del ajuste:              }\PYG{l+s+si}{\PYGZob{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Excelente}\PYG{l+s+s1}{\PYGZsq{}}\PYG{+w}{ }\PYG{k}{if}\PYG{+w}{ }\PYG{n}{k}\PYG{+w}{ }\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{l+m+mf}{1.5}\PYG{+w}{ }\PYG{k}{else}\PYG{+w}{ }\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Moderada}\PYG{l+s+s1}{\PYGZsq{}}\PYG{+w}{ }\PYG{k}{if}\PYG{+w}{ }\PYG{n}{k}\PYG{+w}{ }\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{l+m+mf}{1.0}\PYG{+w}{ }\PYG{k}{else}\PYG{+w}{ }\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Pobre}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+si}{\PYGZcb{}}
+
+\PYG{l+s+s2}{    Interpretación del parámetro k:}
+\PYG{l+s+s2}{    }\PYG{l+s+si}{\PYGZob{}}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{• k = }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{k}\PYG{l+s+si}{:}\PYG{l+s+s1}{.2f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{ indica vientos }\PYG{l+s+si}{\PYGZob{}}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{muy consistentes}\PYG{l+s+s2}{\PYGZdq{}}\PYG{+w}{ }\PYG{k}{if}\PYG{+w}{ }\PYG{n}{k}\PYG{+w}{ }\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{l+m+mi}{3}\PYG{+w}{ }\PYG{k}{else}\PYG{+w}{ }\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{consistentes}\PYG{l+s+s2}{\PYGZdq{}}\PYG{+w}{ }\PYG{k}{if}\PYG{+w}{ }\PYG{n}{k}\PYG{+w}{ }\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{l+m+mi}{2}\PYG{+w}{ }\PYG{k}{else}\PYG{+w}{ }\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{moderadamente variables}\PYG{l+s+s2}{\PYGZdq{}}\PYG{+w}{ }\PYG{k}{if}\PYG{+w}{ }\PYG{n}{k}\PYG{+w}{ }\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{l+m+mf}{1.5}\PYG{+w}{ }\PYG{k}{else}\PYG{+w}{ }\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{altamente variables}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+si}{\PYGZcb{}}
+
+\PYG{l+s+s2}{    ==================================================================================}
+\PYG{l+s+s2}{    3. CLASIFICACIÓN DEL RECURSO EÓLICO}
+\PYG{l+s+s2}{    ==================================================================================}
+
+\PYG{l+s+s2}{    • CLASIFICACIÓN:                   }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{clasificacion\PYGZus{}recurso}\PYG{l+s+si}{\PYGZcb{}}
+\PYG{l+s+s2}{    • VIABILIDAD ECONÓMICA:            }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{viabilidad}\PYG{l+s+si}{\PYGZcb{}}
+\PYG{l+s+s2}{    • DENSIDAD DE POTENCIA:            }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{densidad\PYGZus{}potencia}\PYG{l+s+si}{:}\PYG{l+s+s2}{.0f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ W/m²}
+
+\PYG{l+s+s2}{    Referencia de clasificación (velocidad media anual):}
+\PYG{l+s+s2}{    • Excelente: ≥ 7.5 m/s    • Bueno: 6.5\PYGZhy{}7.4 m/s    • Moderado: 5.5\PYGZhy{}6.4 m/s}
+\PYG{l+s+s2}{    • Marginal: 4.5\PYGZhy{}5.4 m/s   • Pobre: \PYGZlt{} 4.5 m/s}
+
+\PYG{l+s+s2}{    ==================================================================================}
+\PYG{l+s+s2}{    4. ANÁLISIS DE POTENCIA Y GENERACIÓN}
+\PYG{l+s+s2}{    ==================================================================================}
+
+\PYG{l+s+s2}{    • Potencia media generada:         }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{potencia\PYGZus{}media}\PYG{l+s+si}{:}\PYG{l+s+s2}{.0f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ kW}
+\PYG{l+s+s2}{    • Factor de capacidad estimado:    }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{factor\PYGZus{}capacidad}\PYG{l+s+si}{:}\PYG{l+s+s2}{.1f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZpc{}}
+\PYG{l+s+s2}{    • Energía anual estimada:          }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{energia\PYGZus{}anual\PYGZus{}estimada}\PYG{l+s+si}{:}\PYG{l+s+s2}{.0f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ MWh/año}
+
+\PYG{l+s+s2}{    ESTADOS DE OPERACIÓN:}
+\PYG{l+s+s2}{    • Horas sin generación:            }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{horas\PYGZus{}totales}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{+w}{ }\PYG{n}{horas\PYGZus{}operacion}\PYG{l+s+si}{:}\PYG{l+s+s2}{,}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ (}\PYG{l+s+si}{\PYGZob{}}\PYG{p}{(}\PYG{p}{(}\PYG{n}{horas\PYGZus{}totales}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{+w}{ }\PYG{n}{horas\PYGZus{}operacion}\PYG{p}{)}\PYG{o}{/}\PYG{n}{horas\PYGZus{}totales}\PYG{p}{)}\PYG{o}{*}\PYG{l+m+mi}{100}\PYG{l+s+si}{:}\PYG{l+s+s2}{.1f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZpc{})}
+\PYG{l+s+s2}{    • Horas con generación:            }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{horas\PYGZus{}operacion}\PYG{l+s+si}{:}\PYG{l+s+s2}{,}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ (}\PYG{l+s+si}{\PYGZob{}}\PYG{p}{(}\PYG{n}{horas\PYGZus{}operacion}\PYG{o}{/}\PYG{n}{horas\PYGZus{}totales}\PYG{p}{)}\PYG{o}{*}\PYG{l+m+mi}{100}\PYG{l+s+si}{:}\PYG{l+s+s2}{.1f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZpc{})}
+\PYG{l+s+s2}{    • Horas a potencia nominal:        }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{horas\PYGZus{}nominal}\PYG{l+s+si}{:}\PYG{l+s+s2}{,}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ (}\PYG{l+s+si}{\PYGZob{}}\PYG{p}{(}\PYG{n}{horas\PYGZus{}nominal}\PYG{o}{/}\PYG{n}{horas\PYGZus{}totales}\PYG{p}{)}\PYG{o}{*}\PYG{l+m+mi}{100}\PYG{l+s+si}{:}\PYG{l+s+s2}{.1f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZpc{})}
+
+\PYG{l+s+s2}{    • Velocidades útiles (3\PYGZhy{}25 m/s):   }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{porcentaje\PYGZus{}velocidades\PYGZus{}utiles}\PYG{l+s+si}{:}\PYG{l+s+s2}{.1f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZpc{}}
+
+\PYG{l+s+s2}{    ==================================================================================}
+\PYG{l+s+s2}{    5. ANÁLISIS TEMPORAL}
+\PYG{l+s+s2}{    ==================================================================================}
+
+\PYG{l+s+s2}{    VARIACIÓN MENSUAL:}
+\PYG{l+s+s2}{    • Mejor mes:                       }\PYG{l+s+si}{\PYGZob{}}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Enero}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Febrero}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Marzo}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Abril}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Mayo}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Junio}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Julio}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Agosto}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Septiembre}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Octubre}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Noviembre}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Diciembre}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}\PYG{p}{[}\PYG{n}{mejor\PYGZus{}mes}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{]}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ (}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{vel\PYGZus{}mejor\PYGZus{}mes}\PYG{l+s+si}{:}\PYG{l+s+s2}{.2f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ m/s)}
+\PYG{l+s+s2}{    • Peor mes:                        }\PYG{l+s+si}{\PYGZob{}}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Enero}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Febrero}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Marzo}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Abril}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Mayo}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Junio}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Julio}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Agosto}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Septiembre}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Octubre}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Noviembre}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{Diciembre}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{]}\PYG{p}{[}\PYG{n}{peor\PYGZus{}mes}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{]}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ (}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{vel\PYGZus{}peor\PYGZus{}mes}\PYG{l+s+si}{:}\PYG{l+s+s2}{.2f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ m/s)}
+\PYG{l+s+s2}{    • Variación estacional:            }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{vel\PYGZus{}mejor\PYGZus{}mes}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{+w}{ }\PYG{n}{vel\PYGZus{}peor\PYGZus{}mes}\PYG{l+s+si}{:}\PYG{l+s+s2}{.2f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ m/s}
+
+\PYG{l+s+s2}{    VARIACIÓN DIARIA:}
+\PYG{l+s+s2}{    • Mejor hora del día:              }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{mejor\PYGZus{}hora}\PYG{l+s+si}{:}\PYG{l+s+s2}{02d}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{:00 hrs}
+\PYG{l+s+s2}{    • Peor hora del día:               }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{peor\PYGZus{}hora}\PYG{l+s+si}{:}\PYG{l+s+s2}{02d}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{:00 hrs}
+
+\PYG{l+s+s2}{    ==================================================================================}
+\PYG{l+s+s2}{    6. EVALUACIÓN DE VIABILIDAD ECONÓMICA}
+\PYG{l+s+s2}{    ==================================================================================}
+
+\PYG{l+s+s2}{    FACTORES POSITIVOS:}
+\PYG{l+s+s2}{    }\PYG{l+s+s2}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+
+        \PYG{c+c1}{\PYGZsh{} Agregar factores positivos}
+        \PYG{k}{if} \PYG{n}{velocidad\PYGZus{}media} \PYG{o}{\PYGZgt{}}\PYG{o}{=} \PYG{l+m+mf}{6.0}\PYG{p}{:}
+            \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{✓ Velocidad media anual superior a 6 m/s}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s+s2}{\PYGZdq{}}
+        \PYG{k}{if} \PYG{n}{factor\PYGZus{}capacidad} \PYG{o}{\PYGZgt{}}\PYG{o}{=} \PYG{l+m+mi}{25}\PYG{p}{:}
+            \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{✓ Factor de capacidad superior al 25}\PYG{l+s+s2}{\PYGZpc{}}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s+s2}{\PYGZdq{}}
+        \PYG{k}{if} \PYG{n}{porcentaje\PYGZus{}velocidades\PYGZus{}utiles} \PYG{o}{\PYGZgt{}}\PYG{o}{=} \PYG{l+m+mi}{70}\PYG{p}{:}
+            \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{✓ Alto porcentaje de velocidades útiles para generación}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s+s2}{\PYGZdq{}}
+        \PYG{k}{if} \PYG{n}{k} \PYG{o}{\PYGZgt{}}\PYG{o}{=} \PYG{l+m+mf}{2.0}\PYG{p}{:}
+            \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{✓ Vientos consistentes (k ≥ 2.0)}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s+s2}{\PYGZdq{}}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{vel\PYGZus{}mejor\PYGZus{}mes} \PYG{o}{\PYGZhy{}} \PYG{n}{vel\PYGZus{}peor\PYGZus{}mes}\PYG{p}{)} \PYG{o}{\PYGZlt{}}\PYG{o}{=} \PYG{l+m+mf}{2.0}\PYG{p}{:}
+            \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{✓ Baja variación estacional}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s+s2}{\PYGZdq{}}
+
+        \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+s2}{    FACTORES DE RIESGO:}
+\PYG{l+s+s2}{    }\PYG{l+s+s2}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+
+        \PYG{c+c1}{\PYGZsh{} Agregar factores de riesgo}
+        \PYG{k}{if} \PYG{n}{velocidad\PYGZus{}media} \PYG{o}{\PYGZlt{}} \PYG{l+m+mf}{5.5}\PYG{p}{:}
+            \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{⚠ Velocidad media anual inferior a 5.5 m/s}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s+s2}{\PYGZdq{}}
+        \PYG{k}{if} \PYG{n}{factor\PYGZus{}capacidad} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{20}\PYG{p}{:}
+            \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{⚠ Factor de capacidad inferior al 20}\PYG{l+s+s2}{\PYGZpc{}}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s+s2}{\PYGZdq{}}
+        \PYG{k}{if} \PYG{n}{porcentaje\PYGZus{}velocidades\PYGZus{}utiles} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{60}\PYG{p}{:}
+            \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{⚠ Bajo porcentaje de velocidades útiles}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s+s2}{\PYGZdq{}}
+        \PYG{k}{if} \PYG{n}{k} \PYG{o}{\PYGZlt{}} \PYG{l+m+mf}{1.5}\PYG{p}{:}
+            \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{⚠ Vientos altamente variables (k \PYGZlt{} 1.5)}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s+s2}{\PYGZdq{}}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{vel\PYGZus{}mejor\PYGZus{}mes} \PYG{o}{\PYGZhy{}} \PYG{n}{vel\PYGZus{}peor\PYGZus{}mes}\PYG{p}{)} \PYG{o}{\PYGZgt{}} \PYG{l+m+mf}{3.0}\PYG{p}{:}
+            \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{⚠ Alta variación estacional}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s+s2}{\PYGZdq{}}
+
+        \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+s2}{    ==================================================================================}
+\PYG{l+s+s2}{    7. RECOMENDACIONES TÉCNICAS}
+\PYG{l+s+s2}{    ==================================================================================}
+
+\PYG{l+s+s2}{    SELECCIÓN DE AEROGENERADORES:}
+\PYG{l+s+s2}{    }\PYG{l+s+s2}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+
+        \PYG{k}{if} \PYG{n}{velocidad\PYGZus{}media} \PYG{o}{\PYGZgt{}}\PYG{o}{=} \PYG{l+m+mf}{7.0}\PYG{p}{:}
+            \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{• Recomendado: Aerogeneradores de alta potencia (≥2MW)}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s+s2}{\PYGZdq{}}
+            \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{• Velocidad de arranque: 3\PYGZhy{}4 m/s}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s+s2}{\PYGZdq{}}
+            \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{• Velocidad nominal: 12\PYGZhy{}15 m/s}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s+s2}{\PYGZdq{}}
+        \PYG{k}{elif} \PYG{n}{velocidad\PYGZus{}media} \PYG{o}{\PYGZgt{}}\PYG{o}{=} \PYG{l+m+mf}{5.5}\PYG{p}{:}
+            \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{• Recomendado: Aerogeneradores de media potencia (1\PYGZhy{}2MW)}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s+s2}{\PYGZdq{}}
+            \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{• Velocidad de arranque: 2.5\PYGZhy{}3.5 m/s}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s+s2}{\PYGZdq{}}
+            \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{• Velocidad nominal: 10\PYGZhy{}12 m/s}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s+s2}{\PYGZdq{}}
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{• Considerar: Aerogeneradores de baja potencia (\PYGZlt{}1MW)}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s+s2}{\PYGZdq{}}
+            \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{• Velocidad de arranque: ≤3 m/s}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s+s2}{\PYGZdq{}}
+            \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{• Velocidad nominal: 8\PYGZhy{}10 m/s}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s+s2}{\PYGZdq{}}
+
+        \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+s2}{    ALTURA DE BUJE RECOMENDADA:}
+\PYG{l+s+s2}{    }\PYG{l+s+s2}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+
+        \PYG{k}{if} \PYG{n}{velocidad\PYGZus{}media} \PYG{o}{\PYGZgt{}}\PYG{o}{=} \PYG{l+m+mf}{6.5}\PYG{p}{:}
+            \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{• 80\PYGZhy{}100 metros (recurso eólico bueno)}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s+s2}{\PYGZdq{}}
+        \PYG{k}{elif} \PYG{n}{velocidad\PYGZus{}media} \PYG{o}{\PYGZgt{}}\PYG{o}{=} \PYG{l+m+mf}{5.0}\PYG{p}{:}
+            \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{• 100\PYGZhy{}120 metros (para optimizar recurso)}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s+s2}{\PYGZdq{}}
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{• ≥120 metros (necesario para mejorar recurso)}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s+s2}{\PYGZdq{}}
+
+        \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+s2}{    ==================================================================================}
+\PYG{l+s+s2}{    8. CONCLUSIONES Y RECOMENDACIONES FINALES}
+\PYG{l+s+s2}{    ==================================================================================}
+
+\PYG{l+s+s2}{    RESUMEN EJECUTIVO:}
+\PYG{l+s+s2}{    }\PYG{l+s+s2}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+
+        \PYG{k}{if} \PYG{n}{velocidad\PYGZus{}media} \PYG{o}{\PYGZgt{}}\PYG{o}{=} \PYG{l+m+mf}{7.0}\PYG{p}{:}
+            \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+s2}{    • El sitio presenta condiciones EXCELENTES para desarrollo eólico}
+\PYG{l+s+s2}{    • Se recomienda proceder con estudios de factibilidad detallados}
+\PYG{l+s+s2}{    • Potencial para proyecto comercial de gran escala}
+\PYG{l+s+s2}{    • Retorno de inversión esperado: Alto}
+\PYG{l+s+s2}{    }\PYG{l+s+s2}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+        \PYG{k}{elif} \PYG{n}{velocidad\PYGZus{}media} \PYG{o}{\PYGZgt{}}\PYG{o}{=} \PYG{l+m+mf}{6.0}\PYG{p}{:}
+            \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+s2}{    • El sitio presenta condiciones BUENAS para desarrollo eólico}
+\PYG{l+s+s2}{    • Se recomienda análisis económico detallado}
+\PYG{l+s+s2}{    • Potencial para proyecto comercial de mediana escala}
+\PYG{l+s+s2}{    • Retorno de inversión esperado: Moderado a Alto}
+\PYG{l+s+s2}{    }\PYG{l+s+s2}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+        \PYG{k}{elif} \PYG{n}{velocidad\PYGZus{}media} \PYG{o}{\PYGZgt{}}\PYG{o}{=} \PYG{l+m+mf}{5.0}\PYG{p}{:}
+            \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+s2}{    • El sitio presenta condiciones MODERADAS para desarrollo eólico}
+\PYG{l+s+s2}{    • Requiere análisis económico exhaustivo}
+\PYG{l+s+s2}{    • Considerar incentivos gubernamentales}
+\PYG{l+s+s2}{    • Retorno de inversión esperado: Moderado}
+\PYG{l+s+s2}{    }\PYG{l+s+s2}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+s2}{    • El sitio presenta condiciones POBRES para desarrollo eólico}
+\PYG{l+s+s2}{    • NO se recomienda para proyectos comerciales}
+\PYG{l+s+s2}{    • Considerar otras fuentes de energía renovable}
+\PYG{l+s+s2}{    • Retorno de inversión esperado: Bajo o Negativo}
+\PYG{l+s+s2}{    }\PYG{l+s+s2}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+
+        \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+s2}{    PRÓXIMOS PASOS RECOMENDADOS:}
+\PYG{l+s+s2}{    }\PYG{l+s+s2}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+
+        \PYG{k}{if} \PYG{n}{velocidad\PYGZus{}media} \PYG{o}{\PYGZgt{}}\PYG{o}{=} \PYG{l+m+mf}{6.0}\PYG{p}{:}
+            \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+s2}{    1. Instalación de torre de medición de al menos 100m por 12 meses}
+\PYG{l+s+s2}{    2. Estudio de impacto ambiental}
+\PYG{l+s+s2}{    3. Análisis de conexión a red eléctrica}
+\PYG{l+s+s2}{    4. Evaluación económica detallada con datos locales}
+\PYG{l+s+s2}{    5. Consulta con comunidades locales}
+\PYG{l+s+s2}{    }\PYG{l+s+s2}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+        \PYG{k}{elif} \PYG{n}{velocidad\PYGZus{}media} \PYG{o}{\PYGZgt{}}\PYG{o}{=} \PYG{l+m+mf}{5.0}\PYG{p}{:}
+            \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+s2}{    1. Medición adicional por 12 meses a mayor altura}
+\PYG{l+s+s2}{    2. Análisis de costos de operación y mantenimiento}
+\PYG{l+s+s2}{    3. Evaluación de incentivos fiscales disponibles}
+\PYG{l+s+s2}{    4. Comparación con otras tecnologías renovables}
+\PYG{l+s+s2}{    }\PYG{l+s+s2}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+s2}{    1. Considerar otros sitios con mejor exposición al viento}
+\PYG{l+s+s2}{    2. Evaluar tecnologías eólicas de pequeña escala}
+\PYG{l+s+s2}{    3. Analizar hibridación con solar fotovoltaica}
+\PYG{l+s+s2}{    4. Estudio de otras fuentes renovables}
+\PYG{l+s+s2}{    }\PYG{l+s+s2}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+
+        \PYG{n}{reporte} \PYG{o}{+}\PYG{o}{=} \PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+s2}{    ==================================================================================}
+\PYG{l+s+s2}{    NOTA TÉCNICA:}
+\PYG{l+s+s2}{    Este reporte se basa en los datos proporcionados y utiliza modelos estándar de}
+\PYG{l+s+s2}{    la industria eólica. Para decisiones de inversión, se recomienda validar con}
+\PYG{l+s+s2}{    mediciones adicionales y consultores especializados.}
+
+\PYG{l+s+s2}{    Generado por: Sistema de Análisis Eólico v1.0}
+\PYG{l+s+s2}{    ==================================================================================}
+\PYG{l+s+s2}{    }\PYG{l+s+s2}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+
+        \PYG{c+c1}{\PYGZsh{} Guardar el reporte}
+        \PYG{n}{ruta\PYGZus{}reporte} \PYG{o}{=} \PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{RUTA\PYGZus{}RES}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{/reporte\PYGZus{}detallado\PYGZus{}eolico\PYGZus{}santa\PYGZus{}cruz.txt}\PYG{l+s+s1}{\PYGZsq{}}
+        \PYG{k}{with} \PYG{n+nb}{open}\PYG{p}{(}\PYG{n}{ruta\PYGZus{}reporte}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{w}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{encoding}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{utf\PYGZhy{}8}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)} \PYG{k}{as} \PYG{n}{f}\PYG{p}{:}
+            \PYG{n}{f}\PYG{o}{.}\PYG{n}{write}\PYG{p}{(}\PYG{n}{reporte}\PYG{p}{)}
+        
+        \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Reporte detallado generado: }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{ruta\PYGZus{}reporte}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+        \PYG{k}{return} \PYG{n}{ruta\PYGZus{}reporte}
+
+    \PYG{k}{def}\PYG{+w}{ }\PYG{n+nf}{generar\PYGZus{}todos\PYGZus{}graficos}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{)}\PYG{p}{:}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{histograma\PYGZus{}velocidades}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{rosa\PYGZus{}vientos\PYGZus{}colorizada}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{variacion\PYGZus{}temporal}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{analisis\PYGZus{}potencia}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{mapa\PYGZus{}estatico\PYGZus{}velocidades}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{mapa\PYGZus{}potencial\PYGZus{}interactivo}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{estadisticas\PYGZus{}descriptivas}\PYG{p}{(}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{generar\PYGZus{}reporte\PYGZus{}detallado}\PYG{p}{(}\PYG{p}{)}
+
+\PYG{k}{def}\PYG{+w}{ }\PYG{n+nf}{ejecutar\PYGZus{}analisis}\PYG{p}{(}\PYG{p}{)}\PYG{p}{:}
+    \PYG{k}{try}\PYG{p}{:}
+        \PYG{n}{analizador} \PYG{o}{=} \PYG{n}{AnalisisEolicoSantaCruz}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{viento\PYGZus{}santa\PYGZus{}cruz.csv}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{analizador}\PYG{o}{.}\PYG{n}{generar\PYGZus{}todos\PYGZus{}graficos}\PYG{p}{(}\PYG{p}{)}
+    \PYG{k}{except} \PYG{n+ne}{FileNotFoundError}\PYG{p}{:}
+        \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Archivo }\PYG{l+s+s2}{\PYGZsq{}}\PYG{l+s+s2}{viento\PYGZus{}santa\PYGZus{}cruz.csv}\PYG{l+s+s2}{\PYGZsq{}}\PYG{l+s+s2}{ no encontrado}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+    \PYG{k}{except} \PYG{n+ne}{Exception} \PYG{k}{as} \PYG{n}{e}\PYG{p}{:}
+        \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Error: }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{e}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+
+\PYG{k}{if} \PYG{n+nv+vm}{\PYGZus{}\PYGZus{}name\PYGZus{}\PYGZus{}} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{\PYGZus{}\PYGZus{}main\PYGZus{}\PYGZus{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{:}
+    \PYG{n}{ejecutar\PYGZus{}analisis}\PYG{p}{(}\PYG{p}{)}
+
+\end{MintedVerbatim}
